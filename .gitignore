@@ -1,9 +1,10 @@
 ## Ignore generated code 
-AutoRest/NugetPackageTest/Generated
-AutoRest/Generators/NodeJS/NodeJS.Tests/AcceptanceTests/*.js
+PackageTest/NugetPackageTest/Generated
+src/generator/AutoRest.NodeJS.Tests/AcceptanceTests/*.js
 
 ## Ignore user-specific files, temporary files, build results, etc.
 AutoRest/**/Templates/*.cs
+src/**/Templates/*.cs
 
 # User-specific files
 *.suo
@@ -55,6 +56,9 @@ ipch/
 # Visual Studio profiler
 *.psess
 *.vsp
+
+# VS Code settings
+*.vscode
 
 # Code analysis
 *.CodeAnalysisLog.xml
@@ -173,11 +177,27 @@ Thumbs.db
 
 #old nuget restore folder
 .nuget/
-AutoRest/Generators/Ruby/*Tests/Gemfile.lock
-AutoRest/Generators/Ruby/*/RspecTests/Generated/*
+src/generator/AutoRest.Ruby*Tests/Gemfile.lock
+src/generator/AutoRest.Ruby*/*/RspecTests/Generated/*
+
+#netcore 
+/NetCore
+*.lock.json
 
 #dnx installation
 dnx-clr-win-x86*/
 dnx-coreclr-win-x86*/
-*.lock.json
 /dnx
+
+# Gemfile.lock
+Gemfile.lock
+
+# go ignore
+src/generator/AutoRest.Go.Tests/pkg/*
+src/generator/AutoRest.Go.Tests/bin/*
+src/generator/AutoRest.Go.Tests/src/github.com/*
+src/generator/AutoRest.Go.Tests/src/test/vendor/*
+src/generator/AutoRest.Go.Tests/src/test/generated/*
+src/generator/AutoRest.Go.Tests/src/tests/generated/*
+src/generator/AutoRest.Go.Tests/src/tests/vendor/*
+src/generator/AutoRest.Go.Tests/src/tests/glide.lock

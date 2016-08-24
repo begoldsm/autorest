@@ -24,14 +24,14 @@
  * 
  */
 export interface User {
-    id?: number;
-    username?: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    password?: string;
-    phone?: string;
-    userStatus?: number;
+  id?: number;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  password?: string;
+  phone?: string;
+  userStatus?: number;
 }
 
 /**
@@ -44,15 +44,20 @@ export interface User {
  * 
  */
 export interface Category {
-    id?: number;
-    name?: string;
+  id?: number;
+  name?: string;
 }
 
 /**
  * @class
  * Initializes a new instance of the Pet class.
  * @constructor
- * @member {number} [id]
+ * @summary A pet
+ *
+ * A group of properties representing a pet.
+ *
+ * @member {number} [id] The id of the pet. A more detailed description of the
+ * id of the pet.
  * 
  * @member {object} [category]
  * 
@@ -71,12 +76,12 @@ export interface Category {
  * 
  */
 export interface Pet {
-    id?: number;
-    category?: Category;
-    name: string;
-    photoUrls: string[];
-    tags?: Tag[];
-    status?: string;
+  id?: number;
+  category?: Category;
+  name: string;
+  photoUrls: string[];
+  tags?: Tag[];
+  status?: string;
 }
 
 /**
@@ -89,8 +94,8 @@ export interface Pet {
  * 
  */
 export interface Tag {
-    id?: number;
-    name?: string;
+  id?: number;
+  name?: string;
 }
 
 /**
@@ -112,10 +117,10 @@ export interface Tag {
  * 
  */
 export interface Order {
-    id?: number;
-    petId?: number;
-    quantity?: number;
-    shipDate?: Date;
-    status?: string;
-    complete?: boolean;
+  id?: number;
+  petId?: number;
+  quantity?: number;
+  shipDate?: Date;
+  status?: string;
+  complete?: boolean;
 }

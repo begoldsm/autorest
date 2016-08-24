@@ -8,6 +8,7 @@ The following documents describes AutoRest specific vendor extensions for [Swagg
 * [x-ms-skip-url-encoding](#x-ms-skip-url-encoding) - skips URL encoding for path and query parameters
 * [x-ms-enum](#x-ms-enum) - additional metadata for enums
 * [x-ms-parameter-grouping](#x-ms-parameter-grouping) - groups method parameters in generated clients
+* [x-ms-parameter-location](#x-ms-parameter-location) - provides a mechanism to specify that the global parameter is actually a parameter on the operation and not a client property.
 * [x-ms-paths](#x-ms-paths) - alternative to [Paths Object](https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md#pathsObject) that allows [Path Item Object](https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md#pathItemObject) to have query parameters for non pure REST APIs
 * [x-ms-client-name](#x-ms-client-name) - allows control over identifier names used in client-side code generation for parameters and schema properties.
 * [x-ms-external](#x-ms-external) - allows specific [Definition Objects](https://github.com/swagger-api/swagger-spec/blob/master/versions/2.0.md#definitionsObject) to be excluded from code generation
@@ -39,7 +40,8 @@ Field Name | Type | Description
 "info": {
    "x-ms-code-generation-settings": {
       "header": "MIT",
-      "internalConstructors": true
+      "internalConstructors": true,
+      "useDateTimeOffset": true
    }
 }
 ```
@@ -153,6 +155,88 @@ If none of the parameters are set the name of the composite type is generated as
 }
 ```
 Above Swagger schema will produce a type CustomParameterGroup with 3 properties (if applicable in the generator language).
+
+## x-ms-parameter-location
+
+By default Autorest processes global parameters as properties on the client. For example `subscriptionId` and `apiVersion` which are defined in the global parameters section end up being properties of the client. It would be natural to define resourceGroupName once in the global parameters section and then reference it everywhere, rather than repeating the same definition inline everywhere. One **may not** want resourceGroupName as a property on the client, just because it is defined in the global parameters section. This extension helps you achieve that. You can add this extension with value "method" 
+`"x-ms-parameter-location": "method"` and resourceGroupName will not be a client property. 
+
+Note:
+- Valid values for this extension are: **"client", "method"**.
+- **This extension can only be applied on global parameters. If this is applied on any parameter in an operation then it will be ignored.**
+
+**Example:**
+```
+{
+  "swagger": "2.0",
+  "host": "management.azure.com",
+  "info": {
+    "title": "AwesomeClient",
+    "version": "2015-05-01"
+  },
+  "paths": {
+    "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Storage/storageAccounts/{accountName}": {
+      "put": {
+        "operationId": "StorageAccounts_Create",
+        . . .
+        "parameters": [
+          {
+            "$ref": "#/parameters/ResourceGroupName"   <<<<<<<<<<<<<<<<<<<<
+          },
+          {
+            "name": "accountName",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The name of the storage account within the specified resource group. Storage account names must be between 3 and 24 characters in length and use numbers and lower-case letters only.  "
+          },
+          {
+            "name": "parameters",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StorageAccountCreateParameters"
+            },
+            "description": "The parameters to provide for the created account."
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          },
+          {
+            "$ref": "#/parameters/SubscriptionIdParameter"
+          }
+        ]
+        . . .
+      }
+    }
+  },
+  . . .
+  "parameters": {
+    "SubscriptionIdParameter": {
+      "name": "subscriptionId",
+      "in": "path",
+      "required": true,
+      "type": "string",
+      "description": "Gets subscription credentials which uniquely identify Microsoft Azure subscription. The subscription ID forms part of the URI for every service call."
+    },
+    "ApiVersionParameter": {
+      "name": "api-version",
+      "in": "query",
+      "required": true,
+      "type": "string",
+      "description": "Client Api Version."
+    },
+    "ResourceGroupName": {
+      "description": "The name of the resource group within the user’s subscription.",
+      "in": "path",
+      "name": "resourceGroupName",
+      "required": true,
+      "type": "string",
+      "x-ms-parameter-location": "method" <<<<<<<<<<<<<<<<<<<<<<<<<<<
+    }
+  }
+}
+```
 
 ## x-ms-paths
 
@@ -389,13 +473,19 @@ When used, replaces the standard Swagger "host" attribute with a host that conta
 Field Name | Type | Description
 ---|:---:|---
 hostTemplate | `string` | **Required**. Specifies the parameterized template for the host.
-parameters | [Array of Parameter Objects](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#parameterObject) | The list of parameters that are used within the hostTemplate. This can include both reference parameters as well as explicit parameters. Note that "in" is **required** and **must be** set to "path"
+useSchemePrefix | `boolean` | **Optional, Default: true**. Specifes whether to prepend the default scheme a.k.a protocol to the base uri of client.
+positionInOperation | `string` | **Optional, Default: first**. Specifies whether the list of parameters will appear in the beginning or in the end, in the method signature for every operation. The order within the parameters provided in the below mentioned array will be preserved. Either the array of parameters will be prepended or appended, based on the value provided over here. Valid values are **"first", "last"**. Every method/operation in any programming language has parameters categorized into two buckets **"required"** and **"optional"**. It is natural for optional paramaters to appear in the end in a method signature. **This aspect will be preserved, while prepending(first) or appending(last) hostTemplate parameters .** 
+parameters | [Array of Parameter Objects](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#parameterObject) | The list of parameters that are used within the hostTemplate. This can include both reference parameters as well as explicit parameters. Note that "in" is **required** and **must be** set to **"path"**. The reference parameters will be treated as **global parameters** and will end up as property of the client.
 
 **Example**:
-Using both explicit and reference parameters
+- Using both explicit and reference parameters.
+   - Since "useSchemePrefix" is not specified, it's default value true will be applied. The user is expected to provide only the value of accountName. The generated code will fit it as a part of the url.
+   - Since "positionInOperation" with value "last" is specified, "accountName" will be the last required parameter in every method. "adlaJobDnsSuffixInPath" will be a property on the client as it is defined in the global parameters section and is referenced here.
+
 ```js
 "x-ms-parameterized-host": {
     "hostTemplate": "{accountName}.{adlaJobDnsSuffix}",
+    "positionInOperation": "last",
     "parameters": [
       {
         "name": "accountName",
@@ -421,10 +511,13 @@ Using both explicit and reference parameters
       "description": "Gets the DNS suffix used as the base for all Azure Data Lake Analytics Job service requests."
     }
 ```
-Using only explicit parameters
+- Using explicit parameters and specifying the positionInOperation and schemePrefix. 
+   - This means that accountName will be the first required parameter in all the methods and the user is expected to provide a url (protocol + accountName), since "useSchemePrfix" is set to false.
 ```js
 "x-ms-parameterized-host": {
     "hostTemplate": "{accountName}.mystaticsuffix.com",
+    "useSchemePrefix": false,
+    "positionInOperation": "first",
     "parameters": [
       {
         "name": "accountName",

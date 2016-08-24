@@ -1,5 +1,4 @@
 /*
-// TODO: Include PageTemplateModels here too?? Probably
  */
 
 
@@ -9,12 +8,13 @@
  * @constructor
  * @member {string} name
  * 
- * @member {string} [type]
+ * @member {string} [type]  Default value: 'Microsoft.Storage/storageAccounts'
+ * .
  * 
  */
 export interface StorageAccountCheckNameAvailabilityParameters {
-    name: string;
-    type?: string;
+  name: string;
+  type?: string;
 }
 
 /**
@@ -22,6 +22,7 @@ export interface StorageAccountCheckNameAvailabilityParameters {
  * Initializes a new instance of the CheckNameAvailabilityResult class.
  * @constructor
  * The CheckNameAvailability operation response.
+ *
  * @member {boolean} [nameAvailable] Gets a boolean value that indicates
  * whether the name is available for you to use. If true, the name is
  * available. If false, the name has already been taken or invalid and cannot
@@ -36,9 +37,9 @@ export interface StorageAccountCheckNameAvailabilityParameters {
  * 
  */
 export interface CheckNameAvailabilityResult {
-    nameAvailable?: boolean;
-    reason?: string;
-    message?: string;
+  nameAvailable?: boolean;
+  reason?: string;
+  message?: string;
 }
 
 /**
@@ -51,7 +52,7 @@ export interface CheckNameAvailabilityResult {
  * 
  */
 export interface StorageAccountPropertiesCreateParameters {
-    accountType: string;
+  accountType: string;
 }
 
 /**
@@ -59,6 +60,7 @@ export interface StorageAccountPropertiesCreateParameters {
  * Initializes a new instance of the StorageAccountCreateParameters class.
  * @constructor
  * The parameters to provide for the account.
+ *
  * @member {string} location Resource location
  * 
  * @member {object} [tags] Resource tags
@@ -71,9 +73,9 @@ export interface StorageAccountPropertiesCreateParameters {
  * 
  */
 export interface StorageAccountCreateParameters extends BaseResource {
-    location: string;
-    tags?: { [propertyName: string]: string };
-    properties?: StorageAccountPropertiesCreateParameters;
+  location: string;
+  tags?: { [propertyName: string]: string };
+  properties?: StorageAccountPropertiesCreateParameters;
 }
 
 /**
@@ -82,6 +84,7 @@ export interface StorageAccountCreateParameters extends BaseResource {
  * @constructor
  * The URIs that are used to perform a retrieval of a public blob, queue or
  * table object.
+ *
  * @member {string} [blob] Gets the blob endpoint.
  * 
  * @member {string} [queue] Gets the queue endpoint.
@@ -92,10 +95,10 @@ export interface StorageAccountCreateParameters extends BaseResource {
  * 
  */
 export interface Endpoints {
-    blob?: string;
-    queue?: string;
-    table?: string;
-    file?: string;
+  blob?: string;
+  queue?: string;
+  table?: string;
+  file?: string;
 }
 
 /**
@@ -104,6 +107,7 @@ export interface Endpoints {
  * @constructor
  * The custom domain assigned to this storage account. This can be set via
  * Update.
+ *
  * @member {string} name Gets or sets the custom domain name. Name is the
  * CNAME source.
  * 
@@ -113,8 +117,8 @@ export interface Endpoints {
  * 
  */
 export interface CustomDomain {
-    name: string;
-    useSubDomain?: boolean;
+  name: string;
+  useSubDomain?: boolean;
 }
 
 /**
@@ -191,17 +195,17 @@ export interface CustomDomain {
  * 
  */
 export interface StorageAccountProperties {
-    provisioningState?: string;
-    accountType?: string;
-    primaryEndpoints?: Endpoints;
-    primaryLocation?: string;
-    statusOfPrimary?: string;
-    lastGeoFailoverTime?: Date;
-    secondaryLocation?: string;
-    statusOfSecondary?: string;
-    creationTime?: Date;
-    customDomain?: CustomDomain;
-    secondaryEndpoints?: Endpoints;
+  provisioningState?: string;
+  accountType?: string;
+  primaryEndpoints?: Endpoints;
+  primaryLocation?: string;
+  statusOfPrimary?: string;
+  lastGeoFailoverTime?: Date;
+  secondaryLocation?: string;
+  statusOfSecondary?: string;
+  creationTime?: Date;
+  customDomain?: CustomDomain;
+  secondaryEndpoints?: Endpoints;
 }
 
 /**
@@ -220,11 +224,11 @@ export interface StorageAccountProperties {
  * 
  */
 export interface Resource extends BaseResource {
-    id?: string;
-    name?: string;
-    type?: string;
-    location?: string;
-    tags?: { [propertyName: string]: string };
+  id?: string;
+  name?: string;
+  type?: string;
+  location?: string;
+  tags?: { [propertyName: string]: string };
 }
 
 /**
@@ -232,6 +236,7 @@ export interface Resource extends BaseResource {
  * Initializes a new instance of the StorageAccount class.
  * @constructor
  * The storage account.
+ *
  * @member {object} [properties]
  * 
  * @member {string} [properties.provisioningState] Gets the status of the
@@ -310,7 +315,7 @@ export interface Resource extends BaseResource {
  * 
  */
 export interface StorageAccount extends Resource {
-    properties?: StorageAccountProperties;
+  properties?: StorageAccountProperties;
 }
 
 /**
@@ -318,14 +323,15 @@ export interface StorageAccount extends Resource {
  * Initializes a new instance of the StorageAccountKeys class.
  * @constructor
  * The access keys for the storage account.
+ *
  * @member {string} [key1] Gets the value of key 1.
  * 
  * @member {string} [key2] Gets the value of key 2.
  * 
  */
 export interface StorageAccountKeys {
-    key1?: string;
-    key2?: string;
+  key1?: string;
+  key2?: string;
 }
 
 /**
@@ -352,8 +358,8 @@ export interface StorageAccountKeys {
  * 
  */
 export interface StorageAccountPropertiesUpdateParameters {
-    accountType?: string;
-    customDomain?: CustomDomain;
+  accountType?: string;
+  customDomain?: CustomDomain;
 }
 
 /**
@@ -361,6 +367,7 @@ export interface StorageAccountPropertiesUpdateParameters {
  * Initializes a new instance of the StorageAccountUpdateParameters class.
  * @constructor
  * The parameters to update on the account.
+ *
  * @member {object} [tags] Resource tags
  * 
  * @member {object} [properties]
@@ -385,8 +392,8 @@ export interface StorageAccountPropertiesUpdateParameters {
  * 
  */
 export interface StorageAccountUpdateParameters extends BaseResource {
-    tags?: { [propertyName: string]: string };
-    properties?: StorageAccountPropertiesUpdateParameters;
+  tags?: { [propertyName: string]: string };
+  properties?: StorageAccountPropertiesUpdateParameters;
 }
 
 /**
@@ -397,7 +404,7 @@ export interface StorageAccountUpdateParameters extends BaseResource {
  * 
  */
 export interface StorageAccountRegenerateKeyParameters {
-    keyName: string;
+  keyName: string;
 }
 
 /**
@@ -405,6 +412,7 @@ export interface StorageAccountRegenerateKeyParameters {
  * Initializes a new instance of the UsageName class.
  * @constructor
  * The Usage Names.
+ *
  * @member {string} [value] Gets a string describing the resource name.
  * 
  * @member {string} [localizedValue] Gets a localized string describing the
@@ -412,8 +420,8 @@ export interface StorageAccountRegenerateKeyParameters {
  * 
  */
 export interface UsageName {
-    value?: string;
-    localizedValue?: string;
+  value?: string;
+  localizedValue?: string;
 }
 
 /**
@@ -421,6 +429,7 @@ export interface UsageName {
  * Initializes a new instance of the Usage class.
  * @constructor
  * Describes Storage Resource Usage.
+ *
  * @member {string} unit Gets the unit of measurement. Possible values
  * include: 'Count', 'Bytes', 'Seconds', 'Percent', 'CountsPerSecond',
  * 'BytesPerSecond'
@@ -440,8 +449,29 @@ export interface UsageName {
  * 
  */
 export interface Usage {
-    unit: string;
-    currentValue: number;
-    limit: number;
-    name: UsageName;
+  unit: string;
+  currentValue: number;
+  limit: number;
+  name: UsageName;
+}
+
+
+/**
+ * @class
+ * Initializes a new instance of the StorageAccountListResult class.
+ * @constructor
+ * The list storage accounts operation response.
+ *
+ */
+export interface StorageAccountListResult extends Array<StorageAccount> {
+}
+
+/**
+ * @class
+ * Initializes a new instance of the UsageListResult class.
+ * @constructor
+ * The List Usages operation response.
+ *
+ */
+export interface UsageListResult extends Array<Usage> {
 }

@@ -1,13 +1,7 @@
 
 namespace Petstore.Models
 {
-    using System;
     using System.Linq;
-    using System.Collections.Generic;
-    using Newtonsoft.Json;
-    using Microsoft.Rest;
-    using Microsoft.Rest.Serialization;
-    using Microsoft.Rest.Azure;
 
     public partial class StorageAccountPropertiesCreateParameters
     {
@@ -21,6 +15,9 @@ namespace Petstore.Models
         /// Initializes a new instance of the
         /// StorageAccountPropertiesCreateParameters class.
         /// </summary>
+        /// <param name="accountType">Gets or sets the account type. Possible
+        /// values include: 'Standard_LRS', 'Standard_ZRS', 'Standard_GRS',
+        /// 'Standard_RAGRS', 'Premium_LRS'</param>
         public StorageAccountPropertiesCreateParameters(AccountType accountType)
         {
             AccountType = accountType;
@@ -31,12 +28,15 @@ namespace Petstore.Models
         /// 'Standard_LRS', 'Standard_ZRS', 'Standard_GRS', 'Standard_RAGRS',
         /// 'Premium_LRS'
         /// </summary>
-        [JsonProperty(PropertyName = "accountType")]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "accountType")]
         public AccountType AccountType { get; set; }
 
         /// <summary>
-        /// Validate the object. Throws ValidationException if validation fails.
+        /// Validate the object.
         /// </summary>
+        /// <exception cref="Microsoft.Rest.ValidationException">
+        /// Thrown if validation fails
+        /// </exception>
         public virtual void Validate()
         {
         }

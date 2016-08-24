@@ -33,25 +33,28 @@ class SwaggerPetstoreConfiguration(Configuration):
 class SwaggerPetstore(object):
     """This is a sample server Petstore server.  You can find out more about Swagger at &lt;a href="http://swagger.io"&gt;http://swagger.io&lt;/a&gt; or on irc.freenode.net, #swagger.  For this sample, you can use the api key "special-key" to test the authorization filters
 
-    :param config: Configuration for client.
-    :type config: SwaggerPetstoreConfiguration
+    :ivar config: Configuration for client.
+    :vartype config: SwaggerPetstoreConfiguration
+
+    :param str base_url: Service URL
+    :param str filepath: Existing config
     """
 
-    def __init__(self, config):
+    def __init__(
+            self, base_url=None, filepath=None):
 
-        self._client = ServiceClient(None, config)
+        self.config = SwaggerPetstoreConfiguration(base_url, filepath)
+        self._client = ServiceClient(None, self.config)
 
         client_models = {k: v for k, v in models.__dict__.items() if isinstance(v, type)}
-        self._serialize = Serializer()
+        self._serialize = Serializer(client_models)
         self._deserialize = Deserializer(client_models)
 
-        self.config = config
 
     def add_pet_using_byte_array(
-            self, body=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Fake endpoint to test byte array in body parameter for adding a new
-        pet to the store
+            self, body=None, custom_headers=None, raw=False, **operation_config):
+        """Fake endpoint to test byte array in body parameter for adding a new
+        pet to the store.
 
         :param body: Pet object in the form of byte array
         :type body: str
@@ -95,9 +98,11 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def add_pet(
-            self, body=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Add a new pet to the store
+            self, body=None, custom_headers=None, raw=False, **operation_config):
+        """Add a new pet to the store.
+
+        Adds a new pet to the store. You may receive an HTTP invalid input if
+        your pet is invalid.
 
         :param body: Pet object that needs to be added to the store
         :type body: :class:`Pet <petstore.models.Pet>`
@@ -141,9 +146,8 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def update_pet(
-            self, body=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Update an existing pet
+            self, body=None, custom_headers=None, raw=False, **operation_config):
+        """Update an existing pet.
 
         :param body: Pet object that needs to be added to the store
         :type body: :class:`Pet <petstore.models.Pet>`
@@ -187,10 +191,10 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def find_pets_by_status(
-            self, status=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Finds Pets by status
-        Multiple status values can be provided with comma seperated strings
+            self, status=None, custom_headers=None, raw=False, **operation_config):
+        """Finds Pets by status.
+
+        Multiple status values can be provided with comma seperated strings.
 
         :param status: Status values that need to be considered for filter
         :type status: list of str
@@ -236,9 +240,9 @@ class SwaggerPetstore(object):
         return deserialized
 
     def find_pets_by_tags(
-            self, tags=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Finds Pets by tags
+            self, tags=None, custom_headers=None, raw=False, **operation_config):
+        """Finds Pets by tags.
+
         Muliple tags can be provided with comma seperated strings. Use tag1,
         tag2, tag3 for testing.
 
@@ -286,11 +290,11 @@ class SwaggerPetstore(object):
         return deserialized
 
     def find_pets_with_byte_array(
-            self, pet_id, custom_headers={}, raw=False, **operation_config):
-        """
-        Fake endpoint to test byte array return by 'Find pet by ID'
+            self, pet_id, custom_headers=None, raw=False, **operation_config):
+        """Fake endpoint to test byte array return by 'Find pet by ID'.
+
         Returns a pet when ID < 10.  ID > 10 or nonintegers will simulate API
-        error conditions
+        error conditions.
 
         :param pet_id: ID of pet that needs to be fetched
         :type pet_id: long
@@ -338,11 +342,11 @@ class SwaggerPetstore(object):
         return deserialized
 
     def get_pet_by_id(
-            self, pet_id, custom_headers={}, raw=False, **operation_config):
-        """
-        Find pet by ID
+            self, pet_id, custom_headers=None, raw=False, **operation_config):
+        """Find pet by ID.
+
         Returns a pet when ID < 10.  ID > 10 or nonintegers will simulate API
-        error conditions
+        error conditions.
 
         :param pet_id: ID of pet that needs to be fetched
         :type pet_id: long
@@ -390,9 +394,8 @@ class SwaggerPetstore(object):
         return deserialized
 
     def update_pet_with_form(
-            self, pet_id, name=None, status=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Updates a pet in the store with form data
+            self, pet_id, name=None, status=None, custom_headers=None, raw=False, **operation_config):
+        """Updates a pet in the store with form data.
 
         :param pet_id: ID of pet that needs to be updated
         :type pet_id: str
@@ -444,9 +447,8 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def delete_pet(
-            self, pet_id, api_key=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Deletes a pet
+            self, pet_id, api_key=None, custom_headers=None, raw=False, **operation_config):
+        """Deletes a pet.
 
         :param pet_id: Pet id to delete
         :type pet_id: long
@@ -491,9 +493,8 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def upload_file(
-            self, pet_id, additional_metadata=None, file=None, custom_headers={}, raw=False, **operation_config):
-        """
-        uploads an image
+            self, pet_id, additional_metadata=None, file=None, custom_headers=None, raw=False, **operation_config):
+        """uploads an image.
 
         :param pet_id: ID of pet to update
         :type pet_id: long
@@ -545,10 +546,10 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def get_inventory(
-            self, custom_headers={}, raw=False, **operation_config):
-        """
-        Returns pet inventories by status
-        Returns a map of status codes to quantities
+            self, custom_headers=None, raw=False, **operation_config):
+        """Returns pet inventories by status.
+
+        Returns a map of status codes to quantities.
 
         :param dict custom_headers: headers that will be added to the request
         :param bool raw: returns the direct response alongside the
@@ -590,9 +591,8 @@ class SwaggerPetstore(object):
         return deserialized
 
     def place_order(
-            self, body=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Place an order for a pet
+            self, body=None, custom_headers=None, raw=False, **operation_config):
+        """Place an order for a pet.
 
         :param body: order placed for purchasing the pet
         :type body: :class:`Order <petstore.models.Order>`
@@ -643,11 +643,11 @@ class SwaggerPetstore(object):
         return deserialized
 
     def get_order_by_id(
-            self, order_id, custom_headers={}, raw=False, **operation_config):
-        """
-        Find purchase order by ID
+            self, order_id, custom_headers=None, raw=False, **operation_config):
+        """Find purchase order by ID.
+
         For valid response try integer IDs with value <= 5 or > 10. Other
-        values will generated exceptions
+        values will generated exceptions.
 
         :param order_id: ID of pet that needs to be fetched
         :type order_id: str
@@ -695,11 +695,11 @@ class SwaggerPetstore(object):
         return deserialized
 
     def delete_order(
-            self, order_id, custom_headers={}, raw=False, **operation_config):
-        """
-        Delete purchase order by ID
+            self, order_id, custom_headers=None, raw=False, **operation_config):
+        """Delete purchase order by ID.
+
         For valid response try integer IDs with value < 1000. Anything above
-        1000 or nonintegers will generate API errors
+        1000 or nonintegers will generate API errors.
 
         :param order_id: ID of the order that needs to be deleted
         :type order_id: str
@@ -740,9 +740,9 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def create_user(
-            self, body=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Create user
+            self, body=None, custom_headers=None, raw=False, **operation_config):
+        """Create user.
+
         This can only be done by the logged in user.
 
         :param body: Created user object
@@ -787,9 +787,8 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def create_users_with_array_input(
-            self, body=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Creates list of users with given input array
+            self, body=None, custom_headers=None, raw=False, **operation_config):
+        """Creates list of users with given input array.
 
         :param body: List of user object
         :type body: list of :class:`User <petstore.models.User>`
@@ -833,9 +832,8 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def create_users_with_list_input(
-            self, body=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Creates list of users with given input array
+            self, body=None, custom_headers=None, raw=False, **operation_config):
+        """Creates list of users with given input array.
 
         :param body: List of user object
         :type body: list of :class:`User <petstore.models.User>`
@@ -879,9 +877,8 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def login_user(
-            self, username=None, password=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Logs user into the system
+            self, username=None, password=None, custom_headers=None, raw=False, **operation_config):
+        """Logs user into the system.
 
         :param username: The user name for login
         :type username: str
@@ -931,9 +928,8 @@ class SwaggerPetstore(object):
         return deserialized
 
     def logout_user(
-            self, custom_headers={}, raw=False, **operation_config):
-        """
-        Logs out current logged in user session
+            self, custom_headers=None, raw=False, **operation_config):
+        """Logs out current logged in user session.
 
         :param dict custom_headers: headers that will be added to the request
         :param bool raw: returns the direct response alongside the
@@ -968,9 +964,8 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def get_user_by_name(
-            self, username, custom_headers={}, raw=False, **operation_config):
-        """
-        Get user by user name
+            self, username, custom_headers=None, raw=False, **operation_config):
+        """Get user by user name.
 
         :param username: The name that needs to be fetched. Use user1 for
          testing.
@@ -1019,9 +1014,9 @@ class SwaggerPetstore(object):
         return deserialized
 
     def update_user(
-            self, username, body=None, custom_headers={}, raw=False, **operation_config):
-        """
-        Updated user
+            self, username, body=None, custom_headers=None, raw=False, **operation_config):
+        """Updated user.
+
         This can only be done by the logged in user.
 
         :param username: name that need to be deleted
@@ -1072,9 +1067,9 @@ class SwaggerPetstore(object):
             return client_raw_response
 
     def delete_user(
-            self, username, custom_headers={}, raw=False, **operation_config):
-        """
-        Delete user
+            self, username, custom_headers=None, raw=False, **operation_config):
+        """Delete user.
+
         This can only be done by the logged in user.
 
         :param username: The name that needs to be deleted

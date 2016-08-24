@@ -169,12 +169,16 @@ SwaggerPetstore.prototype.addPetUsingByteArray = function (options, callback) {
 /**
  * @summary Add a new pet to the store
  *
+ * Adds a new pet to the store. You may receive an HTTP invalid input if your
+ * pet is invalid.
+ *
  * @param {object} [options] Optional Parameters.
  * 
  * @param {object} [options.body] Pet object that needs to be added to the
  * store
  * 
- * @param {number} [options.body.id]
+ * @param {number} [options.body.id] The id of the pet. A more detailed
+ * description of the id of the pet.
  * 
  * @param {object} [options.body.category]
  * 
@@ -182,9 +186,9 @@ SwaggerPetstore.prototype.addPetUsingByteArray = function (options, callback) {
  * 
  * @param {string} [options.body.category.name]
  * 
- * @param {string} [options.body.name]
+ * @param {string} options.body.name
  * 
- * @param {array} [options.body.photoUrls]
+ * @param {array} options.body.photoUrls
  * 
  * @param {array} [options.body.tags]
  * 
@@ -296,7 +300,8 @@ SwaggerPetstore.prototype.addPet = function (options, callback) {
  * @param {object} [options.body] Pet object that needs to be added to the
  * store
  * 
- * @param {number} [options.body.id]
+ * @param {number} [options.body.id] The id of the pet. A more detailed
+ * description of the id of the pet.
  * 
  * @param {object} [options.body.category]
  * 
@@ -304,9 +309,9 @@ SwaggerPetstore.prototype.addPet = function (options, callback) {
  * 
  * @param {string} [options.body.category.name]
  * 
- * @param {string} [options.body.name]
+ * @param {string} options.body.name
  * 
- * @param {array} [options.body.photoUrls]
+ * @param {array} options.body.photoUrls
  * 
  * @param {array} [options.body.tags]
  * 
@@ -461,6 +466,9 @@ SwaggerPetstore.prototype.findPetsByStatus = function (options, callback) {
   // Construct URL
   var requestUrl = this.baseUri +
                    '//pet/findByStatus';
+  // trim all duplicate forward slashes in the url
+  var regex = /([^:]\/)\/+/gi;
+  requestUrl = requestUrl.replace(regex, '$1');
   var queryParameters = [];
   if (status !== null && status !== undefined) {
     queryParameters.push('status=' + encodeURIComponent(status.join(',')));
@@ -468,9 +476,6 @@ SwaggerPetstore.prototype.findPetsByStatus = function (options, callback) {
   if (queryParameters.length > 0) {
     requestUrl += '?' + queryParameters.join('&');
   }
-  // trim all duplicate forward slashes in the url
-  var regex = /([^:]\/)\/+/gi;
-  requestUrl = requestUrl.replace(regex, '$1');
 
   // Create HTTP transport objects
   var httpRequest = new WebResource();
@@ -604,6 +609,9 @@ SwaggerPetstore.prototype.findPetsByTags = function (options, callback) {
   // Construct URL
   var requestUrl = this.baseUri +
                    '//pet/findByTags';
+  // trim all duplicate forward slashes in the url
+  var regex = /([^:]\/)\/+/gi;
+  requestUrl = requestUrl.replace(regex, '$1');
   var queryParameters = [];
   if (tags !== null && tags !== undefined) {
     queryParameters.push('tags=' + encodeURIComponent(tags.join(',')));
@@ -611,9 +619,6 @@ SwaggerPetstore.prototype.findPetsByTags = function (options, callback) {
   if (queryParameters.length > 0) {
     requestUrl += '?' + queryParameters.join('&');
   }
-  // trim all duplicate forward slashes in the url
-  var regex = /([^:]\/)\/+/gi;
-  requestUrl = requestUrl.replace(regex, '$1');
 
   // Create HTTP transport objects
   var httpRequest = new WebResource();
@@ -2163,6 +2168,9 @@ SwaggerPetstore.prototype.loginUser = function (options, callback) {
   // Construct URL
   var requestUrl = this.baseUri +
                    '//user/login';
+  // trim all duplicate forward slashes in the url
+  var regex = /([^:]\/)\/+/gi;
+  requestUrl = requestUrl.replace(regex, '$1');
   var queryParameters = [];
   if (username !== null && username !== undefined) {
     queryParameters.push('username=' + encodeURIComponent(username));
@@ -2173,9 +2181,6 @@ SwaggerPetstore.prototype.loginUser = function (options, callback) {
   if (queryParameters.length > 0) {
     requestUrl += '?' + queryParameters.join('&');
   }
-  // trim all duplicate forward slashes in the url
-  var regex = /([^:]\/)\/+/gi;
-  requestUrl = requestUrl.replace(regex, '$1');
 
   // Create HTTP transport objects
   var httpRequest = new WebResource();

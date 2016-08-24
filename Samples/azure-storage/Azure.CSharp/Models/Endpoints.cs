@@ -1,13 +1,7 @@
 
 namespace Petstore.Models
 {
-    using System;
     using System.Linq;
-    using System.Collections.Generic;
-    using Newtonsoft.Json;
-    using Microsoft.Rest;
-    using Microsoft.Rest.Serialization;
-    using Microsoft.Rest.Azure;
 
     /// <summary>
     /// The URIs that are used to perform a retrieval of a public blob, queue
@@ -23,6 +17,10 @@ namespace Petstore.Models
         /// <summary>
         /// Initializes a new instance of the Endpoints class.
         /// </summary>
+        /// <param name="blob">Gets the blob endpoint.</param>
+        /// <param name="queue">Gets the queue endpoint.</param>
+        /// <param name="table">Gets the table endpoint.</param>
+        /// <param name="file">Gets the file endpoint.</param>
         public Endpoints(string blob = default(string), string queue = default(string), string table = default(string), string file = default(string))
         {
             Blob = blob;
@@ -34,25 +32,25 @@ namespace Petstore.Models
         /// <summary>
         /// Gets the blob endpoint.
         /// </summary>
-        [JsonProperty(PropertyName = "blob")]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "blob")]
         public string Blob { get; set; }
 
         /// <summary>
         /// Gets the queue endpoint.
         /// </summary>
-        [JsonProperty(PropertyName = "queue")]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "queue")]
         public string Queue { get; set; }
 
         /// <summary>
         /// Gets the table endpoint.
         /// </summary>
-        [JsonProperty(PropertyName = "table")]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "table")]
         public string Table { get; set; }
 
         /// <summary>
         /// Gets the file endpoint.
         /// </summary>
-        [JsonProperty(PropertyName = "file")]
+        [Newtonsoft.Json.JsonProperty(PropertyName = "file")]
         public string File { get; set; }
 
     }
