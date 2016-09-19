@@ -182,9 +182,31 @@ namespace AutoRest.Java.TemplateModels
             get
             {
                 List<string> invocations = new List<string>();
-                foreach (var parameter in LocalParameters)
+                foreach (var parameter in LocalParameters.Where(p => !p.IsConstant))
                 {
                     invocations.Add(parameter.Name);
+                }
+
+                var declaration = string.Join(", ", invocations);
+                return declaration;
+            }
+        }
+
+        public string MethodDefaultParameterInvocation
+        {
+            get
+            {
+                List<string> invocations = new List<string>();
+                foreach (var parameter in LocalParameters)
+                {
+                    if (parameter.IsRequired)
+                    {
+                        invocations.Add(parameter.Name);
+                    }
+                    else
+                    {
+                        invocations.Add("null");
+                    }
                 }
 
                 var declaration = string.Join(", ", invocations);
@@ -199,13 +221,9 @@ namespace AutoRest.Java.TemplateModels
                 List<string> invocations = new List<string>();
                 foreach (var parameter in LocalParameters)
                 {
-                    if (parameter.IsRequired)
+                    if (parameter.IsRequired && !parameter.IsConstant)
                     {
                         invocations.Add(parameter.Name);
-                    }
-                    else
-                    {
-                        invocations.Add("null");
                     }
                 }
 
@@ -463,7 +481,7 @@ namespace AutoRest.Java.TemplateModels
         {
             get
             {
-                var parameters = MethodRequiredParameterInvocation;
+                var parameters = MethodDefaultParameterInvocation;
                 if (!parameters.IsNullOrEmpty())
                 {
                     parameters += ", ";
@@ -658,13 +676,46 @@ namespace AutoRest.Java.TemplateModels
             return builder.ToString();
         }
 
+        public virtual string ClientResponse(bool filterRequired = false)
+        {
+            IndentedStringBuilder builder = new IndentedStringBuilder();
+            if (ReturnTypeModel.NeedsConversion)
+            {
+                builder.AppendLine("ServiceResponse<{0}> result = {1}Delegate(response);", ReturnTypeModel.GenericBodyWireTypeString, this.Name);
+                builder.AppendLine("{0} body = null;", ReturnTypeModel.BodyClientType)
+                    .AppendLine("if (result.getBody() != null) {")
+                    .Indent().AppendLine("{0}", ReturnTypeModel.ConvertBodyToClientType("result.getBody()", "body"))
+                    .Outdent().AppendLine("}");
+                builder.AppendLine("ServiceResponse<{0}> clientResponse = new ServiceResponse<{0}>(body, result.getResponse());",
+                    ReturnTypeModel.GenericBodyClientTypeString);
+            }
+            else
+            {
+                builder.AppendLine("{0} clientResponse = {1}Delegate(response);", ReturnTypeModel.WireResponseTypeString, this.Name);
+            }
+            return builder.ToString();
+        }
+
         public virtual string ServiceCallConstruction
         {
             get
             {
                 return string.Format(CultureInfo.InvariantCulture,
-                    "final ServiceCall<{0}> serviceCall = new ServiceCall<>(call);",
-                    ReturnTypeModel.GenericBodyClientTypeString);
+                    "final ServiceCall<{0}> serviceCall = ServiceCall.{1}(call);",
+                    ReturnTypeModel.GenericBodyClientTypeString, ServiceCallFactoryMethod);
+            }
+        }
+
+        public virtual string ServiceCallFactoryMethod
+        {
+            get
+            {
+                string factoryMethod = "create";
+                if (ReturnType.Headers != null)
+                {
+                    factoryMethod = "createWithHeaders";
+                }
+                return factoryMethod;
             }
         }
 
@@ -682,6 +733,7 @@ namespace AutoRest.Java.TemplateModels
             {
                 HashSet<string> imports = new HashSet<string>();
                 // static imports
+                imports.Add("rx.Observable");
                 imports.Add("com.microsoft.rest.ServiceCall");
                 imports.Add("com.microsoft.rest." + ReturnTypeModel.ClientResponseType);
                 imports.Add("com.microsoft.rest.ServiceCallback");
@@ -689,12 +741,6 @@ namespace AutoRest.Java.TemplateModels
                 this.ParameterModels.ForEach(p => imports.AddRange(p.InterfaceImports));
                 // return type
                 imports.AddRange(this.ReturnTypeModel.InterfaceImports);
-                // exceptions
-                this.ExceptionString.Split(new string[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
-                    .ForEach(ex => {
-                        string exceptionImport = JavaCodeNamer.GetJavaException(ex, ServiceClient);
-                        if (exceptionImport != null) imports.Add(JavaCodeNamer.GetJavaException(ex, ServiceClient));
-                    });
                 return imports.ToList();
             }
         }
@@ -705,7 +751,8 @@ namespace AutoRest.Java.TemplateModels
             {
                 HashSet<string> imports = new HashSet<string>();
                 // static imports
-                imports.Add("retrofit2.Call");
+                imports.Add("rx.Observable");
+                imports.Add("rx.functions.Func1");
                 if (RequestContentType == "multipart/form-data" || RequestContentType == "application/x-www-form-urlencoded")
                 {
                     imports.Add("retrofit2.http.Multipart");
@@ -735,15 +782,6 @@ namespace AutoRest.Java.TemplateModels
                 if (!ParametersToValidate.IsNullOrEmpty())
                 {
                     imports.Add("com.microsoft.rest.Validator");
-                }
-                // internal callback
-                if (this.CallType == "Void")
-                {
-                    imports.Add("com.microsoft.rest.ServiceResponseEmptyCallback");
-                }
-                else
-                {
-                    imports.Add("com.microsoft.rest.ServiceResponseCallback");
                 }
                 // parameters
                 this.LocalParameters.Concat(this.LogicalParameterModels)
