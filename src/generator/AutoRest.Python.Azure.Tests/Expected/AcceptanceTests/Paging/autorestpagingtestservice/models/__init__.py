@@ -9,22 +9,24 @@
 # regenerated.
 # --------------------------------------------------------------------------
 
-from .product import Product
 from .product_properties import ProductProperties
+from .product import Product
 from .operation_result import OperationResult
 from .paging_get_multiple_pages_options import PagingGetMultiplePagesOptions
 from .paging_get_odata_multiple_pages_options import PagingGetOdataMultiplePagesOptions
 from .paging_get_multiple_pages_with_offset_options import PagingGetMultiplePagesWithOffsetOptions
+from .custom_parameter_group import CustomParameterGroup
 from .product_paged import ProductPaged
 from .product_paged1 import ProductPaged1
 
 __all__ = [
-    'Product',
     'ProductProperties',
+    'Product',
     'OperationResult',
     'PagingGetMultiplePagesOptions',
     'PagingGetOdataMultiplePagesOptions',
     'PagingGetMultiplePagesWithOffsetOptions',
+    'CustomParameterGroup',
     'ProductPaged',
     'ProductPaged1',
 ]

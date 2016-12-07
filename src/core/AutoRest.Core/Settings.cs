@@ -12,6 +12,7 @@ using AutoRest.Core.Properties;
 using AutoRest.Core.Utilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using static AutoRest.Core.Utilities.DependencyInjection;
 
 namespace AutoRest.Core
 {
@@ -43,13 +44,27 @@ Licensed under the MIT License. See License.txt in the project root for license 
 ";
 
         private string _header;
+        public static Settings Instance => Singleton<Settings>.Instance;
 
         public Settings()
         {
+            if (!Context.IsActive)
+            {
+                throw new Exception("A context must be active before creating settings.");
+            }
+            if (Singleton<Settings>.HasInstanceInCurrentActivation)
+            {
+                throw new Exception("The current context already has settings. (Did you mean to create a nested context?)");
+            }
+
+            // this instance of the settings object should be used for subsequent 
+            // requests for settings.
+            Singleton<Settings>.Instance = this;
+
             FileSystem = new FileSystem();
             OutputDirectory = Path.Combine(Environment.CurrentDirectory, "Generated");
             CustomSettings = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            Header = string.Format(CultureInfo.InvariantCulture, DefaultCodeGenerationHeader, AutoRest.Version);
+            Header = string.Format(CultureInfo.InvariantCulture, DefaultCodeGenerationHeader, AutoRestController.Version);
             CodeGenerator = "CSharp";
             Modeler = "Swagger";
             ValidationLevel = LogEntrySeverity.Error;
@@ -78,7 +93,7 @@ Licensed under the MIT License. See License.txt in the project root for license 
                     }
                     else
                     {
-                        _inputFolder = new Uri(Path.Combine(Directory.GetParent(Input).FullName, "."));
+                        _inputFolder = new Uri(this.FileSystem.GetParentDir(Input), UriKind.Relative);
                     }
                 }
                 return _inputFolder;
@@ -159,6 +174,9 @@ Licensed under the MIT License. See License.txt in the project root for license 
         [SettingsAlias("name")]
         public string ClientName { get; set; }
 
+        [SettingsInfo("Disables post-codegeneration simplifier")]
+        public bool DisableSimplifier { get; set; }
+
         /// <summary>
         /// Gets or sets the maximum number of properties in the request body.
         /// If the number of properties in the request body is less than or
@@ -184,11 +202,11 @@ Licensed under the MIT License. See License.txt in the project root for license 
             {
                 if (value == "MICROSOFT_MIT")
                 {
-                    _header = MicrosoftMitLicenseHeader + Environment.NewLine + string.Format(CultureInfo.InvariantCulture, DefaultCodeGenerationHeader, AutoRest.Version);
+                    _header = MicrosoftMitLicenseHeader + Environment.NewLine + string.Format(CultureInfo.InvariantCulture, DefaultCodeGenerationHeader, AutoRestController.Version);
                 }
                 else if (value == "MICROSOFT_APACHE")
                 {
-                    _header = MicrosoftApacheLicenseHeader + Environment.NewLine + string.Format(CultureInfo.InvariantCulture, DefaultCodeGenerationHeader, AutoRest.Version);
+                    _header = MicrosoftApacheLicenseHeader + Environment.NewLine + string.Format(CultureInfo.InvariantCulture, DefaultCodeGenerationHeader, AutoRestController.Version);
                 }
                 else if (value == "MICROSOFT_MIT_NO_VERSION")
                 {
@@ -220,6 +238,15 @@ Licensed under the MIT License. See License.txt in the project root for license 
             "If true, the generated client includes a ServiceClientCredentials property and constructor parameter. " +
             "Authentication behaviors are implemented by extending the ServiceClientCredentials type.")]
         public bool AddCredentials { get; set; }
+
+        /// <summary>
+        /// If set to true, behave in a way consistent with earlier builds of AutoRest..
+        /// </summary>
+        [SettingsInfo(
+            "If true, the code generated will be generated in a way consistent with earlier builds of AutoRest" +
+            "But, will not necessarily be according to latest best practices..")]
+        public bool QuirksMode { get; set; } = true;
+
 
         /// <summary>
         /// If set, will cause generated code to be output to a single file. Not supported by all code generators.
@@ -372,9 +399,9 @@ Licensed under the MIT License. See License.txt in the project root for license 
                 foreach (var setting in settings.ToArray())
                 {
                     PropertyInfo property = entityToPopulate.GetType().GetProperties()
-                        .FirstOrDefault(p => setting.Key.Equals(p.Name, StringComparison.OrdinalIgnoreCase) ||
+                        .FirstOrDefault(p => setting.Key.EqualsIgnoreCase(p.Name) ||
                                              p.GetCustomAttributes<SettingsAliasAttribute>()
-                                                .Any(a => setting.Key.Equals(a.Alias, StringComparison.OrdinalIgnoreCase)));
+                                                .Any(a => setting.Key.EqualsIgnoreCase(a.Alias)));
 
                     if (property != null)
                     {

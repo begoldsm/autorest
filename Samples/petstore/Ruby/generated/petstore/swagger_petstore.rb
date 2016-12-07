@@ -24,6 +24,61 @@ module Petstore
       fail ArgumentError, 'invalid type of credentials input parameter' unless credentials.is_a?(MsRest::ServiceClientCredentials)
       @credentials = credentials
 
+      add_telemetry
+    end
+
+    #
+    # Makes a request and returns the body of the response.
+    # @param method [Symbol] with any of the following values :get, :put, :post, :patch, :delete.
+    # @param path [String] the path, relative to {base_url}.
+    # @param options [Hash{String=>String}] specifying any request options like :body.
+    # @return [Hash{String=>String}] containing the body of the response.
+    # Example:
+    #
+    #  request_content = "{'location':'westus','tags':{'tag1':'val1','tag2':'val2'}}"
+    #  path = "/path"
+    #  options = {
+    #    body: request_content,
+    #    query_params: {'api-version' => '2016-02-01'}
+    #  }
+    #  result = @client.make_request(:put, path, options)
+    #
+    def make_request(method, path, options = {})
+      result = make_request_with_http_info(method, path, options)
+      result.body unless result.nil?
+    end
+
+    #
+    # Makes a request and returns the operation response.
+    # @param method [Symbol] with any of the following values :get, :put, :post, :patch, :delete.
+    # @param path [String] the path, relative to {base_url}.
+    # @param options [Hash{String=>String}] specifying any request options like :body.
+    # @return [MsRest::HttpOperationResponse] Operation response containing the request, response and status.
+    #
+    def make_request_with_http_info(method, path, options = {})
+      result = make_request_async(method, path, options).value!
+      result.body = result.response.body.to_s.empty? ? nil : JSON.load(result.response.body)
+      result
+    end
+
+    #
+    # Makes a request asynchronously.
+    # @param method [Symbol] with any of the following values :get, :put, :post, :patch, :delete.
+    # @param path [String] the path, relative to {base_url}.
+    # @param options [Hash{String=>String}] specifying any request options like :body.
+    # @return [Concurrent::Promise] Promise object which holds the HTTP response.
+    #
+    def make_request_async(method, path, options = {})
+      fail ArgumentError, 'method is nil' if method.nil?
+      fail ArgumentError, 'path is nil' if path.nil?
+
+      request_url = options[:base_url] || @base_url
+
+      request_headers = @request_headers
+      options.merge!({headers: request_headers.merge(options[:headers] || {})})
+      options.merge!({credentials: @credentials}) unless @credentials.nil?
+
+      super(request_url, method, path, options)
     end
 
     #
@@ -83,29 +138,26 @@ module Petstore
       request_content = request_content != nil ? JSON.generate(request_content, quirks_mode: true) : nil
 
       path_template = '/pet'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          body: request_content,
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :post, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          body: request_content,
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:post, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 405
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -170,29 +222,26 @@ module Petstore
       request_content = request_content != nil ? JSON.generate(request_content, quirks_mode: true) : nil
 
       path_template = '/pet'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          body: request_content,
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :post, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          body: request_content,
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:post, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 405
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -248,29 +297,26 @@ module Petstore
       request_content = request_content != nil ? JSON.generate(request_content, quirks_mode: true) : nil
 
       path_template = '/pet'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          body: request_content,
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :put, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          body: request_content,
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:put, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 405 || status_code == 404 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -328,29 +374,26 @@ module Petstore
 
       request_headers = {}
       path_template = '/pet/findByStatus'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          query_params: {'status' => status.nil? ? nil : status.join(',')},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :get, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          query_params: {'status' => status.nil? ? nil : status.join(',')},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:get, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 200 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
         # Deserialize Response
         if status_code == 200
           begin
@@ -432,29 +475,26 @@ module Petstore
 
       request_headers = {}
       path_template = '/pet/findByTags'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          query_params: {'tags' => tags.nil? ? nil : tags.join(',')},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :get, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          query_params: {'tags' => tags.nil? ? nil : tags.join(',')},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:get, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 200 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
         # Deserialize Response
         if status_code == 200
           begin
@@ -537,29 +577,26 @@ module Petstore
 
       request_headers = {}
       path_template = '/pet/{petId}'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          path_params: {'petId' => pet_id},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :get, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          path_params: {'petId' => pet_id},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:get, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 404 || status_code == 200 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
         # Deserialize Response
         if status_code == 200
           begin
@@ -634,29 +671,26 @@ module Petstore
 
       request_headers = {}
       path_template = '/pet/{petId}'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          path_params: {'petId' => pet_id},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :get, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          path_params: {'petId' => pet_id},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:get, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 404 || status_code == 200 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
         # Deserialize Response
         if status_code == 200
           begin
@@ -721,29 +755,26 @@ module Petstore
 
       request_headers = {}
       path_template = '/pet/{petId}'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          path_params: {'petId' => pet_id},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :post, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          path_params: {'petId' => pet_id},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:post, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 405
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -798,29 +829,26 @@ module Petstore
       # Set Headers
       request_headers['api_key'] = api_key unless api_key.nil?
       path_template = '/pet/{petId}'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          path_params: {'petId' => pet_id},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :delete, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          path_params: {'petId' => pet_id},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:delete, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -875,29 +903,26 @@ module Petstore
 
       request_headers = {}
       path_template = '/pet/{petId}/uploadImage'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          path_params: {'petId' => pet_id},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :post, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          path_params: {'petId' => pet_id},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:post, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code >= 200 && status_code < 300
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -949,28 +974,25 @@ module Petstore
 
       request_headers = {}
       path_template = '/store/inventory'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :get, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:get, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 200
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
         # Deserialize Response
         if status_code == 200
           begin
@@ -1050,29 +1072,26 @@ module Petstore
       request_content = request_content != nil ? JSON.generate(request_content, quirks_mode: true) : nil
 
       path_template = '/store/order'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          body: request_content,
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :post, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          body: request_content,
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:post, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 200 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
         # Deserialize Response
         if status_code == 200
           begin
@@ -1093,8 +1112,8 @@ module Petstore
     #
     # Find purchase order by ID
     #
-    # For valid response try integer IDs with value <= 5 or > 10. Other values
-    # will generated exceptions
+    # For valid response try integer IDs with value <= 5 or > 10. Other values will
+    # generated exceptions
     #
     # @param order_id [String] ID of pet that needs to be fetched
     # @param custom_headers [Hash{String => String}] A hash of custom headers that
@@ -1110,8 +1129,8 @@ module Petstore
     #
     # Find purchase order by ID
     #
-    # For valid response try integer IDs with value <= 5 or > 10. Other values
-    # will generated exceptions
+    # For valid response try integer IDs with value <= 5 or > 10. Other values will
+    # generated exceptions
     #
     # @param order_id [String] ID of pet that needs to be fetched
     # @param custom_headers [Hash{String => String}] A hash of custom headers that
@@ -1126,8 +1145,8 @@ module Petstore
     #
     # Find purchase order by ID
     #
-    # For valid response try integer IDs with value <= 5 or > 10. Other values
-    # will generated exceptions
+    # For valid response try integer IDs with value <= 5 or > 10. Other values will
+    # generated exceptions
     #
     # @param order_id [String] ID of pet that needs to be fetched
     # @param [Hash{String => String}] A hash of custom headers that will be added
@@ -1141,29 +1160,26 @@ module Petstore
 
       request_headers = {}
       path_template = '/store/order/{orderId}'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          path_params: {'orderId' => order_id},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :get, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          path_params: {'orderId' => order_id},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:get, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 404 || status_code == 200 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
         # Deserialize Response
         if status_code == 200
           begin
@@ -1231,29 +1247,26 @@ module Petstore
 
       request_headers = {}
       path_template = '/store/order/{orderId}'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          path_params: {'orderId' => order_id},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :delete, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          path_params: {'orderId' => order_id},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:delete, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 404 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -1315,29 +1328,26 @@ module Petstore
       request_content = request_content != nil ? JSON.generate(request_content, quirks_mode: true) : nil
 
       path_template = '/user'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          body: request_content,
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :post, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          body: request_content,
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:post, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code >= 200 && status_code < 300
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -1407,29 +1417,26 @@ module Petstore
       request_content = request_content != nil ? JSON.generate(request_content, quirks_mode: true) : nil
 
       path_template = '/user/createWithArray'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          body: request_content,
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :post, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          body: request_content,
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:post, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code >= 200 && status_code < 300
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -1499,29 +1506,26 @@ module Petstore
       request_content = request_content != nil ? JSON.generate(request_content, quirks_mode: true) : nil
 
       path_template = '/user/createWithList'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          body: request_content,
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :post, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          body: request_content,
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:post, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code >= 200 && status_code < 300
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -1573,29 +1577,26 @@ module Petstore
 
       request_headers = {}
       path_template = '/user/login'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          query_params: {'username' => username,'password' => password},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :get, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          query_params: {'username' => username,'password' => password},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:get, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 200 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
         # Deserialize Response
         if status_code == 200
           begin
@@ -1656,28 +1657,25 @@ module Petstore
 
       request_headers = {}
       path_template = '/user/logout'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :get, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:get, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code >= 200 && status_code < 300
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -1730,29 +1728,26 @@ module Petstore
 
       request_headers = {}
       path_template = '/user/{username}'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          path_params: {'username' => username},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :get, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          path_params: {'username' => username},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:get, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 404 || status_code == 200 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
         # Deserialize Response
         if status_code == 200
           begin
@@ -1828,30 +1823,27 @@ module Petstore
       request_content = request_content != nil ? JSON.generate(request_content, quirks_mode: true) : nil
 
       path_template = '/user/{username}'
+
+      request_url = @base_url || self.base_url
+
       options = {
           middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
           path_params: {'username' => username},
           body: request_content,
-          headers: request_headers.merge(custom_headers || {})
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
       }
+      promise = self.make_request_async(:put, path_template, options)
 
-      request_url = @base_url || self.base_url
-
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :put, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
-
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 404 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -1906,29 +1898,26 @@ module Petstore
 
       request_headers = {}
       path_template = '/user/{username}'
-      options = {
-          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
-          path_params: {'username' => username},
-          headers: request_headers.merge(custom_headers || {})
-      }
 
       request_url = @base_url || self.base_url
 
-      request = MsRest::HttpOperationRequest.new(request_url, path_template, :delete, options)
-      promise = request.run_promise do |req|
-        self.credentials.sign_request(req) unless self.credentials.nil?
-      end
+      options = {
+          middlewares: [[MsRest::RetryPolicyMiddleware, times: 3, retry: 0.02], [:cookie_jar]],
+          path_params: {'username' => username},
+          headers: request_headers.merge(custom_headers || {}),
+          base_url: request_url
+      }
+      promise = self.make_request_async(:delete, path_template, options)
 
-      promise = promise.then do |http_response|
+      promise = promise.then do |result|
+        http_response = result.response
         status_code = http_response.status
         response_content = http_response.body
         unless status_code == 404 || status_code == 400
           error_model = JSON.load(response_content)
-          fail MsRest::HttpOperationError.new(request, http_response, error_model)
+          fail MsRest::HttpOperationError.new(result.request, http_response, error_model)
         end
 
-        # Create Result
-        result = MsRest::HttpOperationResponse.new(request, http_response)
 
         result
       end
@@ -1936,5 +1925,17 @@ module Petstore
       promise.execute
     end
 
+
+    private
+    #
+    # Adds telemetry information.
+    #
+    def add_telemetry
+        sdk_information = 'petstore'
+        if defined? Petstore::VERSION
+          sdk_information = "#{sdk_information}/#{Petstore::VERSION}"
+        end
+        add_user_agent_information(sdk_information)
+    end
   end
 end

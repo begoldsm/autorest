@@ -27,10 +27,10 @@ function UsageOperations(client) {
  * subscription.
  *
  * @param {object} [options] Optional Parameters.
- * 
+ *
  * @param {object} [options.customHeaders] Headers that will be added to the
  * request
- * 
+ *
  * @param {function} callback
  *
  * @returns {function} callback(err, result, request, response)
@@ -69,12 +69,9 @@ UsageOperations.prototype.list = function (options, callback) {
   }
 
   // Construct URL
-  var requestUrl = this.client.baseUri +
-                   '//subscriptions/{subscriptionId}/providers/Microsoft.Storage/usages';
+  var baseUrl = this.client.baseUri;
+  var requestUrl = baseUrl + (baseUrl.endsWith('/') ? '' : '/') + 'subscriptions/{subscriptionId}/providers/Microsoft.Storage/usages';
   requestUrl = requestUrl.replace('{subscriptionId}', encodeURIComponent(this.client.subscriptionId));
-  // trim all duplicate forward slashes in the url
-  var regex = /([^:]\/)\/+/gi;
-  requestUrl = requestUrl.replace(regex, '$1');
   var queryParameters = [];
   queryParameters.push('api-version=' + encodeURIComponent(this.client.apiVersion));
   if (queryParameters.length > 0) {
@@ -127,7 +124,7 @@ UsageOperations.prototype.list = function (options, callback) {
           error.body = client.deserialize(resultMapper, parsedErrorResponse, 'error.body');
         }
       } catch (defaultError) {
-        error.message = util.format('Error "%s" occurred in deserializing the responseBody ' + 
+        error.message = util.format('Error "%s" occurred in deserializing the responseBody ' +
                          '- "%s" for the default response.', defaultError.message, responseBody);
         return callback(error);
       }

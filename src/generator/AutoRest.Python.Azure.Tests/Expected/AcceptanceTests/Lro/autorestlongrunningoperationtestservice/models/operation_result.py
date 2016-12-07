@@ -21,8 +21,8 @@ class OperationResult(Model):
     :type status: str
     :param error:
     :type error: :class:`OperationResultError
-     <Fixtures.AcceptanceTestsLro.models.OperationResultError>`
-    """ 
+     <fixtures.acceptancetestslro.models.OperationResultError>`
+    """
 
     _attribute_map = {
         'status': {'key': 'status', 'type': 'str'},
